@@ -1,5 +1,14 @@
 const puppeteer = require("puppeteer");
 const cheerio = require("cheerio");
+const mongoose = require("mongoose");
+
+async function connectToDB() {
+  await mongoose.connect("mongodb://mongo:27017/SFO-Craigslist-techjobs", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  console.log("Connected to mongoDb");
+}
 
 const url = `https://sfbay.craigslist.org/d/software-qa-dba-etc/search/sof`;
 
@@ -30,7 +39,7 @@ async function scrapeJobDescriptions(listings, page) {
     await page.goto(listings[i].link);
     const html = await page.content();
     const $ = cheerio.load(html);
-    const jobDescription = $("#postingbody").text();
+    const jobDescription = $("#postingbody").text().replace(/\n+/g, " ");
     listings[i].jobDescription = jobDescription;
     console.log(listings[i]);
     await sleep(2000);
@@ -42,8 +51,10 @@ async function sleep(ms) {
 }
 
 async function main() {
+  await connectToDB();
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
+    args: ["--no-sandbox", "--disable-gpu"],
   });
   const page = await browser.newPage();
   const listings = await scrapeListings(page);
