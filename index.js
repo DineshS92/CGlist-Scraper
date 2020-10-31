@@ -2,6 +2,8 @@ const puppeteer = require("puppeteer");
 const cheerio = require("cheerio");
 const mongoose = require("mongoose");
 
+const Listing = require("./model/Listing");
+
 async function connectToDB() {
   await mongoose.connect("mongodb://mongo:27017/SFO-Craigslist-techjobs", {
     useNewUrlParser: true,
@@ -42,6 +44,8 @@ async function scrapeJobDescriptions(listings, page) {
     const jobDescription = $("#postingbody").text().replace(/\n+/g, " ");
     listings[i].jobDescription = jobDescription;
     console.log(listings[i]);
+    const listingModel = new Listing(listings[i]);
+    await listingModel.save();
     await sleep(2000);
   }
 }
